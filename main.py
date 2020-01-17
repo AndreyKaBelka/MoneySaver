@@ -1,11 +1,41 @@
+# -*- coding: utf-8 -*-
 import re
 
 import telebot
 
-import sett
+from sett import *
 from dict import *
+import pymysql
 
-bot = telebot.TeleBot(sett.KEY)
+bot = telebot.TeleBot(KEY)
+
+con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
+cur = con.cursor()
+
+
+@bot.message_handler(commands=['start'])
+def welcome_message(message):
+    bot.send_message(message.from_user.id, WELCOME_TEXT)
+    user_id = message.from_user.id
+    bank = 0
+    cur.execute(f"insert into users (idusers, bank) values ({user_id}, {bank}) ")
+    con.commit()
+    con.close()
+
+
+@bot.message_handler(commands=['help'])
+def help_message(message):
+    bot.send_message(message.from_user.id, HELP_TEXT)
+
+
+@bot.message_handler(commands=['bank'])
+def bank_message(message):
+    pass
+
+
+@bot.message_handler(commands=['exp'])
+def exp_message(message):
+    pass
 
 
 @bot.message_handler(content_types=["text"])
@@ -22,26 +52,6 @@ def message_get(message):
             new_cat.append(cat_match)
         if exp_match:
             new_exp.append(exp_match)
-
-
-@bot.message_handler(commands=['start'])
-def welcome_message(message):
-    bot.send_message(message.from_user.id, WELCOME_TEXT)
-
-
-@bot.message_handler(commands=['help'])
-def help_message(message):
-    bot.send_message(message.from_user.id, HELP_TEXT)
-
-
-@bot.message_handler(commands=['bank'])
-def bank_message(message):
-    pass
-
-
-@bot.message_handler(commands=['exp'])
-def exp_message(message):
-    pass
 
 
 if __name__ == "__main__":
