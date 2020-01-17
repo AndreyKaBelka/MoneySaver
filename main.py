@@ -9,17 +9,22 @@ import pymysql
 
 bot = telebot.TeleBot(KEY)
 
-con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
-cur = con.cursor()
-
 
 @bot.message_handler(commands=['start'])
 def welcome_message(message):
     bot.send_message(message.from_user.id, WELCOME_TEXT)
+    con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
+    cur = con.cursor()
     user_id = message.from_user.id
-    bank = 0
-    cur.execute(f"insert into users (idusers, bank) values ({user_id}, {bank}) ")
-    con.commit()
+    isExist = cur.execute(f"SELECT * FROM users WHERE idusers = {user_id}")
+    if not isExist:
+        bank = 0.0
+        cur.execute(f"INSERT INTO users VALUES ({user_id}, {bank}) ")
+        for i, cat in enumerate(START_CAT):
+            idcat = user_id*10+i
+            sql = "INSERT INTO categories (idcategories, name, exp) VALUES (%s,%s,%s) "
+            cur.execute(sql, (idcat, cat, 0.0))
+        con.commit()
     con.close()
 
 
@@ -30,7 +35,7 @@ def help_message(message):
 
 @bot.message_handler(commands=['bank'])
 def bank_message(message):
-    pass
+    bot.send_message(message.from_user.id, BANK_TEXT.encode('utf-8'))
 
 
 @bot.message_handler(commands=['exp'])
