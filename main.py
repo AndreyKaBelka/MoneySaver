@@ -20,7 +20,7 @@ def welcome_message(message):
     isExist = cur.execute(f"SELECT * FROM users WHERE idusers = {user_id}")
     if not isExist:
         bank = 0.0
-        cur.execute(f"INSERT INTO users VALUES ({user_id}, {bank}) ")
+        cur.execute(f"INSERT INTO users VALUES ({user_id}, {bank}, {2}) ")
         for i, cat in enumerate(START_CAT):
             idcat = user_id * 10 + i
             sql = "INSERT INTO categories (idcategories, name, exp) VALUES (%s,%s,%s) "
@@ -70,7 +70,7 @@ def reply_bank(message):
     con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
     cur = con.cursor()
     try:
-        int(new_bank)
+        float(new_bank)
         cur.execute(f"UPDATE users SET bank = {new_bank} WHERE idusers = {user_id}")
         con.commit()
         bot.send_message(user_id, UPDATE_BANK)
@@ -82,7 +82,7 @@ def reply_bank(message):
         con.close()
 
 
-@bot.message_handler(commands=['exp'])
+@bot.message_handler(commands=['exp'])  # TODO: если значения exp одинаковые, бот выводит только одно значение
 def exp_message(message):
     user_id = message.from_user.id
     con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
@@ -108,16 +108,47 @@ def exp_message(message):
 def message_get(message):
     lines = re.split("\n", message.text)
 
-    new_cat = []
-    new_exp = []
+    new_cats = []
+    new_exps = []
 
     for line in lines:
         cat_match = re.findall(NEWCAT_PATT, line)
         exp_match = re.findall(NEWEXP_PATT, line)
         if cat_match:
-            new_cat.append(cat_match)
+            for match in cat_match:
+                new_cats.append(match)
         if exp_match:
-            new_exp.append(exp_match)
+            for match in exp_match:
+                new_exps.append(match)
+
+    if new_exps or new_cats:
+        con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
+        cur = con.cursor()
+        user_id = message.from_user.id
+        if new_cats:
+            cur.execute(f"SELECT cnt_cat FROM users WHERE idusers = {user_id}")
+            count_cat = cur.fetchall()[0][0]
+            for new_cat in new_cats:
+                cat_id = user_id * 10 + count_cat
+                cur.execute("INSERT INTO categories VALUES (%s, %s, %s)", (cat_id, new_cat, 0.0))
+                cur.execute(f"INSERT INTO user_cat VALUES ({user_id}, {cat_id})")
+                count_cat += 1
+            cur.execute(f"UPDATE users SET cnt_cat = {count_cat} WHERE idusers = {user_id}")
+            bot.send_message(user_id, "Новая категория добавлена!")
+
+        if new_exps:
+            for new_exp in new_exps:
+                # TODO: Поиск по одному слову, а не по всем
+                cur.execute("""UPDATE categories SET exp = exp + %s WHERE idcategories IN 
+                                (SELECT cat_id FROM user_cat WHERE user_id = %s) AND name = %s""", (new_exp[0], user_id,
+                                                                                                    new_exp[1]))
+            bot.send_message(user_id, "Траты добавлены!")
+
+        con.commit()
+        cur.close()
+        con.close()
+
+    # TODO: Добавить функцию удаления категории
 
 
 if __name__ == "__main__":
