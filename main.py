@@ -84,7 +84,24 @@ def reply_bank(message):
 
 @bot.message_handler(commands=['exp'])
 def exp_message(message):
-    pass
+    user_id = message.from_user.id
+    con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
+    cur = con.cursor()
+    cur.execute(f"SELECT cat_id FROM user_cat WHERE user_id = {user_id}")
+    rows = cur.fetchall()
+    list_vals = {}
+    for row in rows:
+        cur.execute("SELECT * from categories WHERE idcategories = %s", (row[0]))
+        vals = cur.fetchall()
+        list_vals[vals[0][2]] = vals[0][1]
+    list_keys = list(list_vals.keys())
+    list_keys.sort()
+    text = EXP_TEXT
+    for i in list_keys[::-1]:
+        text += f"{i} - {list_vals[i]}\n"
+    bot.send_message(user_id, text=text)
+    cur.close()
+    con.close()
 
 
 @bot.message_handler(content_types=["text"])
