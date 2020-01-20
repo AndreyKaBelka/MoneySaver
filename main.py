@@ -82,7 +82,7 @@ def reply_bank(message):
         con.close()
 
 
-@bot.message_handler(commands=['exp'])  # TODO: если значения exp одинаковые, бот выводит только одно значение
+@bot.message_handler(commands=['exp'])
 def exp_message(message):
     user_id = message.from_user.id
     con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
@@ -137,10 +137,9 @@ def message_get(message):
 
         if new_exps:
             for new_exp in new_exps:
-                # TODO: Поиск по одному слову, а не по всем
-                cur.execute("""UPDATE categories SET exp = exp + %s WHERE idcategories IN 
-                                (SELECT cat_id FROM user_cat WHERE user_id = %s) AND name = %s""", (new_exp[0], user_id,
-                                                                                                    new_exp[1]))
+                sql = """UPDATE categories SET exp = exp + {0} WHERE name LIKE '%{2}%' AND idcategories IN (SELECT
+                      cat_id FROM user_cat WHERE user_id = {1}) """.format(new_exp[0], user_id, new_exp[1])
+                cur.execute(sql)
             bot.send_message(user_id, "Траты добавлены!")
 
         con.commit()
