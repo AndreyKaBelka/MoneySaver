@@ -50,7 +50,7 @@ def bank_message(message):
     key_yes = types.InlineKeyboardButton(text='Изменить месячный заработок', callback_data='change_bank')
     keyboard.add(key_yes)
 
-    bot.send_message(chat_id=message.from_user.id, text=BANK_TEXT.format(cash, spend).encode('utf-8'),
+    bot.send_message(chat_id=message.from_user.id, text=BANK_TEXT.format(cash, spend, cash - spend).encode('utf-8'),
                      reply_markup=keyboard)
     cur.close()
     con.close()
@@ -89,16 +89,15 @@ def exp_message(message):
     cur = con.cursor()
     cur.execute(f"SELECT cat_id FROM user_cat WHERE user_id = {user_id}")
     rows = cur.fetchall()
-    list_vals = {}
+    dict_vals = []
     for row in rows:
         cur.execute("SELECT * from categories WHERE idcategories = %s", (row[0]))
         vals = cur.fetchall()
-        list_vals[vals[0][2]] = vals[0][1]
-    list_keys = list(list_vals.keys())
-    list_keys.sort()
+        dict_vals.append((vals[0][1], vals[0][2]))
+    dict_vals.sort(key=lambda val: val[1])
     text = EXP_TEXT
-    for i in list_keys[::-1]:
-        text += f"{i} - {list_vals[i]}\n"
+    for pair in dict_vals[::-1]:
+        text += f"{pair[1]} - {pair[0]}\n"
     bot.send_message(user_id, text=text)
     cur.close()
     con.close()
