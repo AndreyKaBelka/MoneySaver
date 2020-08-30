@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import re
 
 import telebot
@@ -43,7 +44,7 @@ def bank_message(message):
     cur.execute(f"SELECT bank FROM users WHERE idusers = {user_id} ")
     cash = cur.fetchall()[0][0]
     cur.execute(f"""SELECT SUM(exp) FROM categories WHERE idcategories IN 
-                    (SELECT cat_id FROM user_cat WHERE user_id = {user_id}) """)
+                    (SELECT idcat FROM user_cat WHERE user_id = {user_id}) """)
     spend = cur.fetchall()[0][0]
 
     keyboard = types.InlineKeyboardMarkup()
@@ -87,7 +88,7 @@ def exp_message(message):
     user_id = message.from_user.id
     con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
     cur = con.cursor()
-    cur.execute(f"SELECT cat_id FROM user_cat WHERE user_id = {user_id}")
+    cur.execute(f"SELECT idcat FROM user_cat WHERE user_id = {user_id}")
     rows = cur.fetchall()
     dict_vals = []
     for row in rows:
@@ -109,45 +110,80 @@ def message_get(message):
 
     new_cats = []
     new_exps = []
+    del_cats = []
 
     for line in lines:
         cat_match = re.findall(NEWCAT_PATT, line)
         exp_match = re.findall(NEWEXP_PATT, line)
+        delcat_match = re.findall(DELCAT_PATT, line)
         if cat_match:
             for match in cat_match:
                 new_cats.append(match)
         if exp_match:
             for match in exp_match:
                 new_exps.append(match)
+        if delcat_match:
+            for match in delcat_match:
+                del_cats.append(match)
 
-    if new_exps or new_cats:
+    if new_exps or new_cats or del_cats:
         con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
         cur = con.cursor()
         user_id = message.from_user.id
-        if new_cats:
-            cur.execute(f"SELECT cnt_cat FROM users WHERE idusers = {user_id}")
-            count_cat = cur.fetchall()[0][0]
-            for new_cat in new_cats:
-                cat_id = user_id * 10 + count_cat
-                cur.execute("INSERT INTO categories VALUES (%s, %s, %s)", (cat_id, new_cat, 0.0))
-                cur.execute(f"INSERT INTO user_cat VALUES ({user_id}, {cat_id})")
-                count_cat += 1
-            cur.execute(f"UPDATE users SET cnt_cat = {count_cat} WHERE idusers = {user_id}")
-            bot.send_message(user_id, "Новая категория добавлена!")
-
-        if new_exps:
-            for new_exp in new_exps:
-                sql = """UPDATE categories SET exp = exp + {0} WHERE name LIKE '%{2}%' AND idcategories IN (SELECT
-                      cat_id FROM user_cat WHERE user_id = {1}) """.format(new_exp[0], user_id, new_exp[1])
-                cur.execute(sql)
-            bot.send_message(user_id, "Траты добавлены!")
+        add_newcat(cur, user_id, new_cats)
+        add_newexp(cur, user_id, new_exps)
+        del_categ(cur, user_id, del_cats)
 
         con.commit()
         cur.close()
         con.close()
 
-    # TODO: Добавить функцию удаления категории
+
+def del_categ(cur, user_id, del_cats):
+    if del_cats:
+        for del_cat in del_cats:
+            if isexist(user_id, cur, del_cat):
+                cur.execute(f"SELECT idcategories FROM categories WHERE name LIKE '%{del_cat}%'")
+                idcat = cur.fetchall()[0][0]
+                cur.execute(f"DELETE FROM categories WHERE idcategories = {idcat}")
+                cur.execute(f"DELETE FROM user_cat WHERE idcat = {idcat}")
+        bot.send_message(user_id, "Категория удалена!")
+
+
+def isexist(user_id, cur, mods):
+    for mod in mods:
+        sql = f"""SELECT name FROM categories WHERE name LIKE '%{mod}%' AND idcategories IN 
+                  (SELECT idcat FROM user_cat WHERE user_id = {user_id})"""
+        cur.execute(sql)
+        if len(cur.fetchall()) > 0:
+            return True
+    return False
+
+
+def add_newcat(cur, user_id, new_cats):
+    if new_cats:
+        cur.execute(f"SELECT cnt_cat FROM users WHERE idusers = {user_id}")
+        count_cat = cur.fetchall()[0][0]
+        for new_cat in new_cats:
+            key_words = re.findall(NEWKYEWORDS, new_cat)
+            if not isexist(user_id, cur, key_words):
+                idcat = user_id * 10 + count_cat
+                cur.execute("INSERT INTO categories VALUES (%s, %s, %s)", (idcat, new_cat, 0.0))
+                cur.execute(f"INSERT INTO user_cat VALUES ({user_id}, {idcat})")
+                count_cat += 1
+        cur.execute(f"UPDATE users SET cnt_cat = {count_cat} WHERE idusers = {user_id}")
+        bot.send_message(user_id, "Новая категория добавлена!")
+
+
+def add_newexp(cur, user_id, new_exps):
+    if new_exps:
+        for new_exp in new_exps:
+            sql = """UPDATE categories SET exp = exp + {0} WHERE name LIKE '%{2}%' AND idcategories IN (SELECT
+                  idcat FROM user_cat WHERE user_id = {1}) """.format(new_exp[0], user_id, new_exp[1])
+            cur.execute(sql)
+        bot.send_message(user_id, "Траты добавлены!")
 
 
 if __name__ == "__main__":
     bot.polling(none_stop=True, interval=5)
+
