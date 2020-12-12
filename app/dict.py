@@ -23,7 +23,7 @@ HELP_TEXT = "Доступные команды для бота:\n" \
 
 NEWCAT_PATT = r"\+([^+\n\r]+)"
 
-NEWKYEWORDS = r"([^\n\r,()+]+[^\s,()]*)"
+NEWKYEWORDS = r"([^\n\r,()+]+)"
 
 NEWEXP_PATT = r"([\d.,]+)[ ]+([^\n\r+]+)"
 
@@ -38,3 +38,5 @@ BANK_TEXT = "\U0001F4B0 Ваш кошелек на месяц: {0} \U0001F4B0\n"
 UPDATE_BANK = "\U0001F60E Банк успешно обновлен! \U0001F60E"
 
 EXP_TEXT = "\U0001F626 Ваши траты в этом месяце: \U0001F626\n"
+
+MAX_CAT_COUNT = 10

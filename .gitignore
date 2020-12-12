@@ -1,5 +1,6 @@
 /venv/
-/sett.py
 .idea
-__pycache__
+/__pycache__/
 example.txt
+config.json
+
