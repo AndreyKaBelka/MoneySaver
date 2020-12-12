@@ -1,6 +1,6 @@
 from typing import List
 
-from flagSchedule import FlagSchedule
+from app.flagSchedule import FlagSchedule
 
 FLAGS = {
     "-f": 1
