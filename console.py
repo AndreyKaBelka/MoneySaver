@@ -5,6 +5,7 @@ FLAGS = {
 }
 
 CONSOLE_OPTIONS = {}
+REQUIRED_FLAGS = ["-f"]
 
 
 class Console:
@@ -16,8 +17,12 @@ class Console:
         for arg in self.args:
             builder = builder.add_attr(arg)
 
-    def canRun(self) -> bool:
-        return False
+    def canRun(self):
+        self.getData()
+        for rq_flags in REQUIRED_FLAGS:
+            if rq_flags not in CONSOLE_OPTIONS.keys():
+                raise SystemExit(f"Required flags: {REQUIRED_FLAGS}")
+        return True
 
 
 class Abstract:
