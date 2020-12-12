@@ -1,5 +1,7 @@
 from typing import List
 
+from flagSchedule import FlagSchedule
+
 FLAGS = {
     "-f": 1
 }
@@ -22,6 +24,7 @@ class Console:
         for rq_flags in REQUIRED_FLAGS:
             if rq_flags not in CONSOLE_OPTIONS.keys():
                 raise SystemExit(f"Required flags: {REQUIRED_FLAGS}")
+        FlagSchedule(CONSOLE_OPTIONS).getDataFromConfig()
         return True
 
 
