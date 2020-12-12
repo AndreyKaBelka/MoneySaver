@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
-
 import re
+import sys
 
 import telebot
 from telebot import types
 
-from sett import *
 from dict import *
 import pymysql
+from console import Console
+import sett
 
-bot = telebot.TeleBot(KEY)
+bot = telebot.TeleBot(sett.KEY)
 
 
 @bot.message_handler(commands=['start'])
 def welcome_message(message):
     bot.send_message(message.from_user.id, WELCOME_TEXT)
-    con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
+    con = pymysql.connect(sett.HOST_NAME, sett.USER_NAME, sett.USER_PASS, sett.SQL_NAME)
     cur = con.cursor()
     user_id = message.from_user.id
     isExist = cur.execute(f"SELECT * FROM users WHERE idusers = {user_id}")
@@ -38,7 +39,7 @@ def help_message(message):
 
 @bot.message_handler(commands=['bank'])
 def bank_message(message):
-    con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
+    con = pymysql.connect(sett.HOST_NAME, sett.USER_NAME, sett.USER_PASS, sett.SQL_NAME)
     cur = con.cursor()
     user_id = message.from_user.id
     cur.execute(f"SELECT bank FROM users WHERE idusers = {user_id} ")
@@ -68,7 +69,7 @@ def callback_func(call):
 def reply_bank(message):
     user_id = message.from_user.id
     new_bank = message.text
-    con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
+    con = pymysql.connect(sett.HOST_NAME, sett.USER_NAME, sett.USER_PASS, sett.SQL_NAME)
     cur = con.cursor()
     try:
         float(new_bank)
@@ -86,7 +87,7 @@ def reply_bank(message):
 @bot.message_handler(commands=['exp'])
 def exp_message(message):
     user_id = message.from_user.id
-    con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
+    con = pymysql.connect(sett.HOST_NAME, sett.USER_NAME, sett.USER_PASS, sett.SQL_NAME)
     cur = con.cursor()
     cur.execute(f"SELECT idcat FROM user_cat WHERE user_id = {user_id}")
     rows = cur.fetchall()
@@ -127,7 +128,7 @@ def message_get(message):
                 del_cats.append(match)
 
     if new_exps or new_cats or del_cats:
-        con = pymysql.connect(HOST_NAME, USER_NAME, USER_PASS, SQL_NAME)
+        con = pymysql.connect(sett.HOST_NAME, sett.USER_NAME, sett.USER_PASS, sett.SQL_NAME)
         cur = con.cursor()
         user_id = message.from_user.id
         add_newcat(cur, user_id, new_cats)
@@ -185,5 +186,8 @@ def add_newexp(cur, user_id, new_exps):
 
 
 if __name__ == "__main__":
-    bot.polling(none_stop=True, interval=5)
-
+    console = Console(sys.argv)
+    if console.canRun():
+        bot.polling(none_stop=True, interval=5)
+    else:
+        raise SystemExit("Specify the config file using -f flag")
