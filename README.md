@@ -1,6 +1,6 @@
 # MoneySaver
 
-This bot will help you to reduce your expenses. The bot was implemented by using Python3.7 + TelegramBotAPI + MySQL
+This bot will help you to reduce your expenses. The bot was implemented by using Python3.8 + TelegramBotAPI + MySQL
 
 ![alt text](https://github.com/AndreyKaBelka/MoneySaver/blob/master/Скриншот1.PNG)   
 
