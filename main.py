@@ -188,7 +188,6 @@ def add_newexp(cur, user_id, new_exps):
 
 
 if __name__ == "__main__":
-
     if console.canRun():
         bot.polling(none_stop=True, interval=5)
     else:
