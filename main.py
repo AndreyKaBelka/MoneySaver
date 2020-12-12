@@ -8,9 +8,11 @@ from telebot import types
 from dict import *
 import pymysql
 from console import Console
-import sett
+from sett import Settings as sett
 
-bot = telebot.TeleBot(sett.KEY)
+console = Console(sys.argv)
+console.canRun()
+bot = telebot.TeleBot(sett.BOT_KEY)
 
 
 @bot.message_handler(commands=['start'])
@@ -19,8 +21,8 @@ def welcome_message(message):
     con = pymysql.connect(sett.HOST_NAME, sett.USER_NAME, sett.USER_PASS, sett.SQL_NAME)
     cur = con.cursor()
     user_id = message.from_user.id
-    isExist = cur.execute(f"SELECT * FROM users WHERE idusers = {user_id}")
-    if not isExist:
+    is_exist = cur.execute(f"SELECT * FROM users WHERE idusers = {user_id}")
+    if not is_exist:
         bank = 0.0
         cur.execute(f"INSERT INTO users VALUES ({user_id}, {bank}, {2}) ")
         for i, cat in enumerate(START_CAT):
@@ -186,7 +188,7 @@ def add_newexp(cur, user_id, new_exps):
 
 
 if __name__ == "__main__":
-    console = Console(sys.argv)
+
     if console.canRun():
         bot.polling(none_stop=True, interval=5)
     else:
