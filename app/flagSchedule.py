@@ -1,5 +1,5 @@
 import json
-from sett import Settings
+from app.sett import Settings
 
 
 def getAtt(file_path):

@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS `moneysaver`.user_cat;
