@@ -1,6 +1,10 @@
+certifi==2020.12.5
+chardet==3.0.4
+idna==2.7
 mysql-connector-python==8.0.21
+protobuf==3.14.0
 PyMySQL==0.10.0
-pyTelegramBotAPI==3.7.3
+pyTelegramBotAPI==3.7.4
 requests==2.20.0
 six==1.15.0
-telebot==0.0.4
+urllib3==1.24.3
